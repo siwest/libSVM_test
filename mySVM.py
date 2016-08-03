@@ -36,6 +36,10 @@ def main(data, labels):
     dataList = readDatatoList(data)
     labelList = readLabelstoList(labels)
     model = svm_train(labelList, dataList)
+    p_labels, p_acc, p_vals = svm_predict(labelList, dataList, model)
+    #print "p_labels ", p_labels
+    print "p_acc", p_acc
+    #print "p_vals", p_vals
 
 
 if __name__ == '__main__':
