@@ -12,7 +12,7 @@ def readDatatoList(textFile):
 	while (l != ''):
 		a = l.split()
 		l2 = []
-		for j in range (0, len(a)/100, 1):
+		for j in range (0, len(a), 150):
 			l2.append(float(a[j]))
 		data.append(l2)
 		l = f.readline()
@@ -36,9 +36,16 @@ def main(data, labels):
     dataList = readDatatoList(data)
     labelList = readLabelstoList(labels)
     model = svm_train(labelList, dataList)
-    p_labels, p_acc, p_vals = svm_predict(labelList, dataList, model)
-    #print "p_labels ", p_labels
-    print "p_acc", p_acc
+    #p_labels, p_acc, p_vals = svm_predict(labelList, dataList, model)
+
+    # Prediction test
+    testList = readDatatoList('testdata')
+    testLabelList = [0] * len(testList)
+    p_labels, p_acc, p_vals = svm_predict(testLabelList, testList, model)
+
+    #ACC, MSE, SCC = evaluations(testList, p_labels)
+    print "p_labels ", p_labels
+    #print "p_acc", p_acc
     #print "p_vals", p_vals
 
 
