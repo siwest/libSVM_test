@@ -5,11 +5,10 @@ import sys
 
 
 def read_data_to_list(text_file):
+    """Read data as a list of lists: each row represented as a list"""
     f = open(text_file)
     data = []
-    i = 0
     l = f.readline()
-
     # Read Data
     while l != '':
         a = l.split()
@@ -19,11 +18,11 @@ def read_data_to_list(text_file):
         data.append(l2)
         l = f.readline()
     f.close()
-    print "Finished read"
     return data
 
 
 def read_labels_to_list(label_file):
+    """Read only labels - LibSVM requires only labels, no line numbers."""
     f = open(label_file)
     data = []
     i = 0
@@ -55,56 +54,64 @@ def pearson_coefficient(x, y):
 
 
 def select_features(data_list, label_list):
+    """Select top 15 correlates features and return new data list containing only data for those columns"""
     r_cols = []
     for i in range(0, len(data_list[0]), 1):
         col_list = []
         for j in range(0, len(data_list), 1):
             col_list.append(data_list[j][i])
         r = pearson_coefficient(col_list, label_list)
-        r_cols.append(r)
-    print "Printing all r in order ", r_cols
+        r_cols.append(abs(r))
+    # print "Printing all r in order ", r_cols
     top_correlated_cols = []
-    print "Printing max r's "
-    for i in range(0, 15, 1):
-        print max(r_cols)
+    # print "Printing max r's "
+
+    col_output_file = open('selected_feature_cols', 'w+')
+    for i in range(0, 150, 1):
+        # print max(r_cols)
         selected_col = r_cols.index(max(r_cols))
+        print>> col_output_file, selected_col
         top_correlated_cols.append(selected_col)
         r_cols[selected_col] = 0
+    col_output_file.close()
 
+    return top_correlated_cols
+
+
+def clean_data(top_correlated_cols, data_list):
     new_data_list = [list() for row in data_list]
-
     for i in range(0, len(data_list), 1):
         temp_list = []
         for j in range(0, len(top_correlated_cols), 1):
-            temp_list.append(data_list[i][j])
+            temp_list.append(data_list[i][top_correlated_cols[j]])
         new_data_list[i] = temp_list
 
     return new_data_list
 
 
+def main(train_data, train_labels, test_data):
+    data_list = read_data_to_list(train_data)
+    label_list = read_labels_to_list(train_labels)
 
-
-def main(data, labels):
-    data_list = read_data_to_list(data)
-    label_list = read_labels_to_list(labels)
-    new_data_list = select_features(data_list, label_list)
+    top_correlated_cols = select_features(data_list, label_list)
+    new_data_list = clean_data(top_correlated_cols, data_list)
 
     model = svm_train(label_list, new_data_list, '-h 0')
-    print "Printing original accuracy"
+    print "Printing accuracy based on training data: ",
     svm_predict(label_list, new_data_list, model)
-    # p_labels, p_acc, p_vals = svm_predict(labelList, dataList, model)
-    # Prediction test
-    test_list = read_data_to_list('testdata')
-    test_label_list = [0] * len(test_list)
-    p_labels, p_acc, p_vals = svm_predict(test_label_list, test_list, model)
 
-    # ACC, MSE, SCC = evaluations(testList, p_labels)
-    #print "p_labels ", p_labels
+    test_list = read_data_to_list(test_data)
+    new_test_list = clean_data(top_correlated_cols, test_list)
+    test_label_list = [0] * len(new_test_list)
+    p_labels, p_acc, p_vals = svm_predict(test_label_list, new_test_list, model)
 
+    output_file = open('output', 'w+')
+    for label in p_labels:
+        print>> output_file, label
 
-# print "p_acc", p_acc
-# print "p_vals", p_vals
+    # print "p_acc", p_acc
+    # print "p_vals", p_vals
 
 
 if __name__ == '__main__':
-    main(data=sys.argv[1], labels=sys.argv[2])
+    main(train_data=sys.argv[1], train_labels=sys.argv[2], test_data=sys.argv[3])
